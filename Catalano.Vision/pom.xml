@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>catalano</groupId>
+        <artifactId>catalano</artifactId>
+        <version>1.5-SNAPSHOT</version>
+    </parent>
+    <artifactId>vision</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Catalano.Vision</name>
+
+
+    <build>
+        <sourceDirectory>${src.dir}</sourceDirectory>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>catalano</groupId>
+            <artifactId>image</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>

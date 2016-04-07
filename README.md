@@ -1,4 +1,4 @@
-Catalano Framework
+Catalano Framework (Maven version)
 =========
 
 The Catalano Framework is a framework for scientific computing for Java and Android. The project started as an initial port of the many features of the [AForge.NET] and [Accord.NET] frameworks for .NET, but is steadily growing with more advanced features which are now being shared between those projects.
