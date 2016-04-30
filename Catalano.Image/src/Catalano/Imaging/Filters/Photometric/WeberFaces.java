@@ -49,161 +49,146 @@ package Catalano.Imaging.Filters.Photometric;
 
 import Catalano.Imaging.FastBitmap;
 import Catalano.Imaging.Tools.ImageUtils;
+import Catalano.Imaging.Tools.Kernel;
 import Catalano.Math.Functions.Gaussian;
-import Catalano.Math.Matrix;
 import Catalano.Math.PaddingMatrix;
 
 /**
- * Self Quocient Image.
+ * Weber faces.
  * @author Diego Catalano
  */
-public class SelfQuocientImage implements IPhotometricFilter{
+public class WeberFaces implements IPhotometricFilter{
     
-    private int size;
     private double sigma;
-    private double[][] kernel;
+    private double alpha;
+    private int size;
+    
+    private double[][] vectors;
 
     /**
-     * Get bandwidth of the gaussian filter.
-     * @return Bandwidth of the gaussian filter.
+     * Get standard deviation of the Gaussian filter.
+     * @return sigma value.
      */
     public double getSigma() {
         return sigma;
     }
 
     /**
-     * Set bandwidth of the gaussian filter.
+     * Set standard deviation of the Gaussian filter.
      * @param sigma Sigma value.
      */
     public void setSigma(double sigma) {
+        Gaussian g = new Gaussian(sigma);
+        double[][] kernel = g.Kernel2D(2*(int)Math.ceil(3*sigma)+1);
+        
         this.sigma = sigma;
-        BuildKernel();
+        this.vectors = Kernel.Decompose(kernel);
     }
 
     /**
-     * Get the size of the kernel.
-     * @return Size of the kernel.
+     * Get parameter balancing the range of the input values of the atan function.
+     * @return Parameter balancing.
+     */
+    public double getAlpha() {
+        return alpha;
+    }
+
+    /**
+     * Set parameter balancing the range of the input values of the atan function.
+     * @param alpha Parameter balancing.
+     */
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+
+    /**
+     * Get the size of the neighborhood.
+     * @return Size of the neighborhood.
      */
     public int getSize() {
         return size;
     }
 
     /**
-     * Set the size of the kernel.
-     * @param size Size of the kernel.
+     * Set the size of the neighborhood.
+     * @param size Size of the neighborhood.
      */
     public void setSize(int size) {
         this.size = size;
-        BuildKernel();
     }
 
     /**
-     * Initializes a new instance of the SelfQuocientImage class.
+     * Initializes a new instance of the WeberFaces class.
      */
-    public SelfQuocientImage() {
-        this(5);
-    }
-    
-    /**
-     * Initializes a new instance of the SelfQuocientImage class.
-     * @param size Size of the kernel.
-     */
-    public SelfQuocientImage(int size){
-        this(size,1);
+    public WeberFaces() {
+        this(1,2,9);
     }
 
     /**
-     * Initializes a new instance of the SelfQuocientImage class.
-     * @param size Size of the kernel.
-     * @param sigma Sigma value.
+     * Initializes a new instance of the WeberFaces class.
+     * @param sigma Smoothing value.
+     * @param alpha Parameter balancing.
+     * @param size Size of the neighborhood.
      */
-    public SelfQuocientImage(int size, double sigma) {
+    public WeberFaces(double sigma, double alpha, int size) {
+        setSigma(sigma);
+        this.alpha = alpha;
         this.size = size;
-        this.sigma = sigma;
-        BuildKernel();
-    }
-    
-    private void BuildKernel(){
-        Gaussian g = new Gaussian(sigma);
-        this.kernel = g.Kernel2D(size);
     }
 
     @Override
     public void applyInPlace(FastBitmap fastBitmap) {
         if(!fastBitmap.isGrayscale())
-            throw new IllegalArgumentException("Self Quocient Image only works in grayscale images.");
+            throw new IllegalArgumentException("Weber Face only works in grayscale images.");
         
+        //Convert the image in double
         double[][] image = fastBitmap.toMatrixGrayAsDouble();
         
-        double[][] result = Process(image, true);
+        //Process the filter
+        double[][] result = Process(image,true);
+        
+        //Back to the image
         fastBitmap.matrixToImage(result);
     }
     
     /**
-     * Process the filter.
+     * Process the weberface filter.
      * @param image Image as matrix.
-     * @param normalize Normalize the image.
+     * @param normalize Normalization.
      * @return Result of the filter.
      */
     public double[][] Process(double[][] image, boolean normalize){
         
-        int width = image[0].length;
-        int height = image.length;
-        
         //Normalize the image
         ImageUtils.Normalize(image);
         
-        //Image padding
-        int padSize = (int)Math.floor(size/2.0);
-        PaddingMatrix pad = new PaddingMatrix(padSize, padSize, true);
-        double[][] padX = pad.Create(image);
+        //Gaussian smoothing
+        double[][] r = ImageUtils.Convolution(image, vectors[0], vectors[1]);
         
-        //Process the image
-        double[][] Z = new double[height][width];
-        for (int i = padSize; i < height + padSize; i++) {
-            for (int j = padSize; j < width + padSize; j++) {
-                double[][] region = Matrix.Submatrix(padX, i-padSize, i+padSize, j-padSize, j+padSize);
-                double[][] m = returnStep(region);
-                double[][] filt1 = Matrix.DotProduct(kernel,m);
+        int pad = (int)((Math.sqrt(size)-1) / 2);
+        
+        PaddingMatrix pm = new PaddingMatrix(pad, pad, true);
+        r = pm.Create(r);
+        
+        //Weberface calculation
+        double[][] result = new double[image.length][image[0].length];
+        for (int i = pad; i < image.length + pad; i++) {
+            for (int j = pad; j < image[0].length + pad; j++) {
                 
                 double sum = 0;
-                for (int k = 0; k < size; k++) {
-                    for (int l = 0; l < size; l++) {
-                        sum += filt1[k][l];
+                for (int k = i - pad; k <= i + pad; k++) {
+                    for (int l = j - pad; l <= j + pad; l++) {
+                        sum += r[i][j] - r[k][l];
                     }
                 }
                 
-                Matrix.Divide(filt1, sum);
-                Z[i-padSize][j-padSize] = Matrix.Sum(Matrix.DotProduct(filt1, region)) / (size*size);
-            }
-        }
-        
-        //Compute self quotient image and correct singularities
-        for (int i = 0; i < Z.length; i++) {
-            for (int j = 0; j < Z[0].length; j++) {
-                Z[i][j] = image[i][j] / (Z[i][j] + 0.01);
+                result[i-pad][j-pad] = Math.atan(alpha * sum / (r[i][j] + 0.01));
             }
         }
         
         if(normalize)
-            ImageUtils.Normalize(Z);
+            ImageUtils.Normalize(result);
         
-        return Z;
-    }
-    
-    private double[][] returnStep(double[][] region){
-        
-        double[][] m = new double[region.length][region[0].length];
-        double mean = Matrix.Mean(region);
-        for (int i = 0; i < region.length; i++) {
-            for (int j = 0; j < region[0].length; j++) {
-                if(region[i][j] >= mean)
-                    m[i][j] = 1;
-                else
-                    m[i][j] = 0;
-            }
-        }
-        
-        return m;
+        return result;
     }
 }
