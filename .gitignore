@@ -32,3 +32,10 @@
 /Catalano.NLP/build/
 Catalano.Android.Image/bin/jarlist.cache
 Catalano.Android.Image/bin/jarlist.cache
+**\pom.xml.next
+**\release.properties
+**\pom.xml.branch
+**\pom.xml.tag
+**\pom.xml.backup
+**\pom.xml.releaseBackup
+
