@@ -12,10 +12,4 @@
 
     <name>Catalano.Io</name>
 
-
-    <build>
-        <sourceDirectory>${src.dir}</sourceDirectory>
-    </build>
-
-
 </project>

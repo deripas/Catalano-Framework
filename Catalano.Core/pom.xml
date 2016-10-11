@@ -7,15 +7,9 @@
         <artifactId>catalano</artifactId>
         <version>1.5.1-SNAPSHOT</version>
     </parent>
+
     <artifactId>core</artifactId>
     <packaging>jar</packaging>
 
     <name>Catalano.Core</name>
-
-
-    <build>
-        <sourceDirectory>${src.dir}</sourceDirectory>
-    </build>
-
-
 </project>
