@@ -4,7 +4,7 @@
 
     <groupId>catalano</groupId>
     <artifactId>catalano</artifactId>
-    <version>1.5.0</version>
+    <version>1.5.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Catalano-Framework</name>
@@ -73,7 +73,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/deripas/Catalano-Framework.git</connection>
-        <tag>catalano-1.5.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
